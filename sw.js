@@ -1,4 +1,4 @@
-const CACHE = 'timer-bars-v16';
+const CACHE = 'timer-bars-v17';
 const FILES = ['./', 'index.html', 'manifest.json', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-192.png', 'icons/icon-maskable-512.png', 'icons/apple-touch-icon.png', 'icons/logo.png'];
 
 self.addEventListener('install', e => {

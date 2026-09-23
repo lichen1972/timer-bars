@@ -225,7 +225,7 @@
           </g>
         </svg>
       </h1>
-      <p class="byline">by Cuong Le <span class="ver">v16</span></p>
+      <p class="byline">by Cuong Le <span class="ver">v17</span></p>
       </div>
       <label class="float-toggle" id="floatToggle"><input type="checkbox" id="floatChk"><span>Float when minimized</span></label>
       <span class="float-msg" id="floatMsg" role="status" aria-live="polite"></span>
@@ -258,6 +258,37 @@
       mults:[2,5,10,20,50] },
   ];
   timers.forEach(t=>{ t.running=false; t.last=null; });
+
+  const STORE_KEY = 'timerbars-state';
+  function saveState(){
+    try{
+      localStorage.setItem(STORE_KEY, JSON.stringify(timers.map(t=>({
+        id:t.id, base:t.base, rounds:t.rounds, round:t.round, phase:t.phase,
+        remaining:t.remaining, running:t.running, last:t.last
+      }))));
+    }catch(e){ /* storage unavailable */ }
+  }
+  function loadState(){
+    try{
+      const saved = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
+      if(!Array.isArray(saved)) return;
+      for(const s of saved){
+        const t = timers.find(x=>x.id===s.id);
+        if(!t) continue;
+        if(t.custom && s.base > 0) t.base = s.base;
+        if(t.mults.includes(s.rounds) || s.rounds===1) t.rounds = s.rounds;
+        t.round = Math.max(1, Math.min(t.rounds, s.round|0 || 1));
+        t.phase = s.phase==='work' ? 'work' : 'idle';
+        t.remaining = typeof s.remaining==='number' ? s.remaining : t.base;
+        t.running = !!s.running && t.phase==='work' && typeof s.last==='number';
+        t.last = t.running ? s.last : null;
+        if(t.phase==='idle'){ t.remaining = t.base; t.round = 1; }
+      }
+    }catch(e){ /* ignore bad data */ }
+  }
+  loadState();
+  window.addEventListener('pagehide', saveState);
+  document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden') saveState(); });
 
   let ticking = false;
   let pipWin = null;
@@ -300,21 +331,24 @@
     if(t.phase === 'done') return;
     t.running = !t.running;
     if(t.running) dingStart(); else syncWakeLock();
-    t.last = performance.now();
+    t.last = Date.now();
     render();
     ensureTick();
+    saveState();
   }
 
   function reset(t){
     t.round = 1; t.rounds = 1; t.phase = 'idle'; t.remaining = t.base; t.running = false;
     render();
     syncWakeLock();
+    saveState();
   }
 
   function setMultiplier(t, m){
     t.rounds = (t.rounds === m) ? 1 : m;
     if(t.phase === 'idle') t.round = 1;
     render();
+    saveState();
   }
 
   function setCustomDuration(t, h, m, s){
@@ -324,6 +358,7 @@
     t.base = total;
     if(t.phase === 'idle') t.remaining = total;
     render();
+    saveState();
   }
 
   let wakeLock = null;
@@ -350,7 +385,7 @@
   }
 
   function tick(){
-    const now = performance.now();
+    const now = Date.now();
     let anyRunning = false, finished = false;
     for(const t of timers){
       if(!t.running) continue;
@@ -358,8 +393,9 @@
       const dt = (now - t.last)/1000;
       t.last = now;
       t.remaining -= dt;
-      if(t.remaining <= 0){
-        dingEnd();
+      let ended = false, lateBy = 0;
+      while(t.running && t.remaining <= 0){
+        ended = true; lateBy = -t.remaining;
         if(t.round >= t.rounds){
           t.round = 1; t.phase = 'idle'; t.remaining = t.base; t.running = false;
           finished = true;
@@ -367,6 +403,10 @@
           t.round += 1;
           t.remaining += t.base;
         }
+      }
+      if(ended){
+        if(lateBy < 3) dingEnd();   // no surprise ding for something that ended long ago
+        saveState();
       }
     }
     updateDom();
@@ -453,7 +493,7 @@
         dragging = true;
         pillEl.classList.add('dragging');
         t.running = true;
-        t.last = performance.now();
+        t.last = Date.now();
         seekPill(t, pillEl, e.clientX);
         updateRowLabels(row, t);
         ensureTick();
@@ -472,6 +512,7 @@
         justDragged = true;
         setTimeout(()=>{ justDragged = false; }, 250);
         updateRowLabels(row, t);
+        saveState();
       };
       pillEl.addEventListener('pointermove', onMove);
       pillEl.addEventListener('pointerup', endDrag);
@@ -596,6 +637,7 @@
   }
 
   render();
+  if(timers.some(t=>t.running)) ensureTick();
 })();
 </script>
 <script>
