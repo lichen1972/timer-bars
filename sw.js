@@ -1,4 +1,4 @@
-const CACHE = 'timer-bars-v18';
+const CACHE = 'timer-bars-v19';
 const FILES = ['./', 'index.html', 'manifest.json', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-192.png', 'icons/icon-maskable-512.png', 'icons/apple-touch-icon.png', 'icons/logo.png'];
 
 self.addEventListener('install', e => {
@@ -6,8 +6,9 @@ self.addEventListener('install', e => {
 });
 
 self.addEventListener('activate', e => {
+  // Only remove this app's own old caches; other apps on the same site keep theirs.
   e.waitUntil(caches.keys()
-    .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
+    .then(keys => Promise.all(keys.filter(k => k.startsWith('timer-bars-') && k !== CACHE).map(k => caches.delete(k))))
     .then(() => self.clients.claim()));
 });
 
