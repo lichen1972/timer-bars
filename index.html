@@ -236,6 +236,16 @@
     .break-card{margin-top:20px;}
     .clock{font-size:40px;}
     .leather-title{width:260px;}
+    #rows{align-items:stretch;}
+    #rows .row{height:100%;}
+    #rows .body{display:flex; flex-direction:column; align-self:stretch;}
+    #rows .controls{margin-top:auto; padding-top:14px;}
+    .side .custom-dur{flex-direction:column; align-items:center; gap:8px; margin:6px 0 0;}
+    .side .custom-dur .cf{align-items:center;}
+    .side .custom-dur .colon{display:none;}
+    .side .custom-dur input{width:52px; text-align:center;}
+    #rows .mult{gap:6px; flex-wrap:nowrap;}
+    #rows .mult label{padding:6px 7px; gap:5px; font-size:12px; flex:1 1 0; justify-content:center; min-width:0;}
   }
   @media (min-width:1180px){ .clock{font-size:44px;} }
 </style>
@@ -267,7 +277,7 @@
           </g>
         </svg>
       </h1>
-      <p class="byline">by Cuong Le <span class="ver">v20</span></p>
+      <p class="byline">by Cuong Le <span class="ver">v21</span></p>
       </div>
       <label class="float-toggle" id="floatToggle"><input type="checkbox" id="floatChk"><span>Float when minimized</span></label>
       <span class="float-msg" id="floatMsg" role="status" aria-live="polite"></span>
@@ -304,6 +314,8 @@
 <script>
 (function(){
   const rowsEl = document.getElementById('rows');
+  const WIDE = window.matchMedia('(min-width:760px)');
+  try{ WIDE.addEventListener('change', ()=>render()); }catch(e){ WIDE.addListener && WIDE.addListener(()=>render()); }
   const DEFAULT_MULTS = [2,5,10];
 
   const timers = [
@@ -620,6 +632,10 @@
           </div>
         </div>
       `;
+      if(WIDE.matches){                                     // iPad: time boxes go under the badge
+        const cd = row.querySelector('.custom-dur'), side = row.querySelector('.side');
+        if(cd && side) side.appendChild(cd);
+      }
       rowsEl.appendChild(row);
 
       let justDragged = false;
