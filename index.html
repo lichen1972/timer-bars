@@ -248,6 +248,18 @@
     #rows .mult label{padding:6px 7px; gap:5px; font-size:12px; flex:1 1 0; justify-content:center; min-width:0;}
   }
   @media (min-width:1180px){ .clock{font-size:44px;} }
+  /* v22: big round Start/Pause button at the bottom-right of each timer, Reset on the left */
+  body:not(.pip) #rows .body{position:relative;}
+  body:not(.pip) #rows .mult{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; flex-wrap:wrap;}
+  body:not(.pip) #rows .mult label{justify-content:center; min-width:0; padding:8px 4px; font-size:13px; flex:none;}
+  body:not(.pip) #rows .controls{padding-right:128px; min-height:44px;}
+  body:not(.pip) #rows .row.few .controls{min-height:96px; align-items:flex-start;}
+  body:not(.pip) #rows .btn.primary{
+    position:absolute; right:0; bottom:0; width:116px; height:116px; min-width:0; padding:0;
+    border-radius:50%; font-size:21px; letter-spacing:.3px;
+    box-shadow:0 6px 0 color-mix(in srgb, var(--track-solid, #7C3AED) 70%, #000), 0 14px 24px -6px var(--shadow, rgba(0,0,0,.5)), inset 0 3px 6px rgba(255,255,255,.35), inset 0 -6px 12px rgba(0,0,0,.18);
+  }
+  body:not(.pip) #rows .btn.primary:active{ transform:translateY(5px) scale(.98); box-shadow:0 1px 0 color-mix(in srgb, var(--track-solid, #7C3AED) 70%, #000), 0 4px 10px -4px var(--shadow, rgba(0,0,0,.4)), inset 0 3px 6px rgba(255,255,255,.3); }
 </style>
 </head>
 <body>
@@ -277,7 +289,7 @@
           </g>
         </svg>
       </h1>
-      <p class="byline">by Cuong Le <span class="ver">v21</span></p>
+      <p class="byline">by Cuong Le <span class="ver">v22</span></p>
       </div>
       <label class="float-toggle" id="floatToggle"><input type="checkbox" id="floatChk"><span>Float when minimized</span></label>
       <span class="float-msg" id="floatMsg" role="status" aria-live="polite"></span>
@@ -590,7 +602,7 @@
     rowsEl.innerHTML = '';
     timers.forEach((t, idx)=>{
       const row = document.createElement('div');
-      row.className = 'row' + (t.phase==='work' ? ' active' : '');
+      row.className = 'row' + (t.phase==='work' ? ' active' : '') + ((t.mults||DEFAULT_MULTS).length<=4 ? ' few' : '');
       row.style.setProperty('--on-track', t.ink);
       row.dataset.id = t.id;
       row.style.setProperty('--shadow', t.shadow);
